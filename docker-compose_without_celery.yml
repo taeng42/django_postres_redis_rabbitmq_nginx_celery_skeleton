@@ -1,0 +1,94 @@
+# yml 파일 포맷 version
+version: "3"
+
+
+# docker-compose 볼륨 정의
+volumes:
+  postgres_db_dev: {}
+
+# 컨테이너 목록
+services:
+  # Database container
+  postgres:
+    container_name: akashic_postgres
+    image: postgres:14.4
+    volumes:
+      - postgres_db_dev:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=akashicdb
+      - POSTGRES_USER=bocal
+      - POSTGRES_PASSWORD=bocal
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+
+
+  # Django container
+  django:
+    # 컨테이너 명
+    container_name: akashic_django
+    # docker build 옵션
+    build:
+      # docker build 명령어를 실행할 디렉토리 경로
+      context: .
+      # 지정할 Dockerfile 경로
+      dockerfile: ./Dockerfile
+    # 환경변수 설정
+    environment:
+      - POSTGRES_DB=akashicdb
+      - POSTGRES_USER=bocal
+      - POSTGRES_PASSWORD=bocal
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_HOST=rabbitmq
+    # 현재 디렉토리를 컨테이너 내 /home/에 마운트
+    volumes:
+      - ./:/home/
+    # 작업 폴더 지정
+    working_dir : /home/
+    # 실행할 명령어
+    command: >
+      bash -c "
+      chmod +x /wait-for-it.sh
+      && /wait-for-it.sh postgres:5432 -t 10
+      && python3 manage.py migrate
+      && python3 manage.py runserver 0.0.0.0:8000"
+    # 호스트 OS와 컨테이너의 포트를 바인딩
+    ports:
+      - "8000:8000"
+    # 호스트 OS에 포트를 공개하지 않고 컨테이너만 포트를 공개 (현재는 주석)
+    #expose:
+    # - "8000"
+    depends_on:
+      - redis
+      - rabbitmq
+
+  # Redis
+  redis:
+    container_name: akashic_redis
+    image: redis:7.0.2
+    ports:
+      - "6379:6379"
+
+  # RabbitMQ
+  rabbitmq:
+    container_name: akashic_rabbitmq
+    image: rabbitmq:3.8.2-management-alpine
+    # 환경변수 설정
+    environment:
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    ports:
+      - "5672:5672" # rabbitMQ default port
+      - "15672:15672" # port for GUI
+  # NginX
+  nginx:
+    image: nginx
+    container_name: akashic_nginx
+    volumes:
+      # nginx.conf 설정을 위한 파일 -> /etc/nginx/conf.d/akashic.conf 에 mount
+      - ./akashic.conf:/etc/nginx/conf.d/akashic.conf
+    ports:
+      - "80:80"  # Nginx default port
+    depends_on:
+      - django
