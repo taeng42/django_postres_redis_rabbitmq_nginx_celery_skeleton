@@ -31,7 +31,7 @@ WORKDIR /home/akashic
 COPY pre_requirements.txt /home/akashic
 COPY requirements.txt /home/akashic
 RUN pip3 install --upgrade pip
-RUN pip3 install -r pre_requirements.txt
+#RUN pip3 install -r pre_requirements.txt
 RUN pip3 install -r requirements.txt
 
 

@@ -94,8 +94,10 @@ services:
       - django
   # Celery
   celery:
+    # 컨테이너 명
     container_name: akashic_celery
     image: django
+    # 환경변수 설정
     environment:
       - POSTGRES_DB=akashicdb
       - POSTGRES_USER=bocal
@@ -110,9 +112,10 @@ services:
       - ./:/home/
     # 작업 폴더 지정
     working_dir : /home/
+    restart: on-failure
     # 실행할 명령어
     command: >
-      bash -c "celery -A tasks worker --loglevel=info"
+      bash -c "celery -A taeng worker --loglevel=INFO"
     depends_on:
       - django
 
