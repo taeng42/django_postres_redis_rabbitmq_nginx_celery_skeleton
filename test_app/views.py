@@ -10,7 +10,7 @@ def index(request):
     print("index", flush=True)
     result = add.delay(1, 100)
     result2 = mul.delay(2, 12)
-    time.sleep(0.002)
+    time.sleep(0.2)
     print(type(result), flush=True)
     print(result, flush=True)
     hashed = 0
