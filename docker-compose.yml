@@ -53,13 +53,14 @@ services:
       && /wait-for-it.sh postgres:5432 -t 10
       && python3 manage.py makemigrations
       && python3 manage.py migrate
-      && python3 manage.py runserver 0.0.0.0:8000"
+      && gunicorn taeng.wsgi:application --bind 0.0.0.0:8000"
+      #&& python3 manage.py runserver 0.0.0.0:8000"
     # 호스트 OS와 컨테이너의 포트를 바인딩
-    ports:
-      - "8000:8000"
+    #ports:
+    #- "8000:8000"
     # 호스트 OS에 포트를 공개하지 않고 컨테이너만 포트를 공개 (현재는 주석)
-    #expose:
-    # - "8000"
+    expose:
+      - "8000"
     depends_on:
       - redis
       - rabbitmq
